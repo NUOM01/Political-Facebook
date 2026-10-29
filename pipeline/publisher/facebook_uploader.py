@@ -11,10 +11,15 @@ Supports:
 """
 
 import os
+import sys
 import json
 import requests
 from pathlib import Path
 from typing import Optional, List, Dict, Any
+
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(BASE_DIR))
+from database import LocalSQLDatabase
 
 class FacebookPublisherAgent:
     def __init__(self, page_id: Optional[str] = None, page_access_token: Optional[str] = None):
@@ -67,11 +72,29 @@ class FacebookPublisherAgent:
             print(f"[Publisher] Published video post! ID: {result.get('id')}")
             return result
 
+    def process_queue(self, dry_run: bool = True):
+        """Processes all ready media items from the local SQL queue."""
+        db = LocalSQLDatabase()
+        pending = db.get_pending_media()
+        print(f"[Publisher] Found {len(pending)} ready item(s) in local SQL media queue.")
+
+        for item in pending:
+            print(f"[Publisher] Processing item #{item['id']} ({item['media_type']}): '{item['title']}'")
+            if item['media_type'] in ['image', 'carousel']:
+                self.publish_photo(
+                    image_path=item['file_path'],
+                    caption=item['caption'],
+                    dry_run=dry_run
+                )
+            elif item['media_type'] == 'video':
+                self.publish_video(
+                    video_path=item['file_path'],
+                    title=item['title'],
+                    description=item['caption'],
+                    dry_run=dry_run
+                )
+
 if __name__ == "__main__":
     publisher = FacebookPublisherAgent()
-    publisher.publish_photo(
-        image_path="sample.png",
-        caption="Sample Campaign Update for Nepal Public Opinion Survey #RSP #NepalElections",
-        dry_run=True
-    )
+    publisher.process_queue(dry_run=True)
 

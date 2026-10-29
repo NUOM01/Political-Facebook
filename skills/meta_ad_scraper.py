@@ -19,6 +19,8 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 
 import requests
+sys.path.insert(0, str(BASE_DIR))
+from database import LocalSQLDatabase
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
@@ -146,7 +148,15 @@ class MetaAdLibraryScraper:
         filepath = DATA_DIR / filename
         with open(filepath, "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
-        print(f"[Storage] Saved {len(data)} items to {filepath}")
+        print(f"[Storage] Saved {len(data)} items to JSON: {filepath}")
+
+        # Persist to isolated local SQL database
+        db = LocalSQLDatabase()
+        saved_count = 0
+        for item in data:
+            db.upsert_ad(item)
+            saved_count += 1
+        print(f"[SQL Storage] Upserted {saved_count} ads into local SQL database (data/campaign.db)")
 
 def main():
     parser = argparse.ArgumentParser(description="Scrape Meta Ad Library for Political Ads in Nepal")

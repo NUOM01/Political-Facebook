@@ -11,10 +11,13 @@ Workflow:
 """
 
 import os
+import sys
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
+sys.path.insert(0, str(BASE_DIR))
+from database import LocalSQLDatabase
 OUTPUT_DIR = BASE_DIR / "data" / "generated_images"
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -53,6 +56,17 @@ class ImageServiceAgent:
         out_path = OUTPUT_DIR / output_filename
         img.save(out_path)
         print(f"[Image Agent] Generated creative: {out_path}")
+
+        # Enqueue in local SQL media table
+        db = LocalSQLDatabase()
+        caption = f"{headline}\n\n{stat_number}: {subtext}\n\n#NepalElections #RSP #PublicOpinion"
+        queue_id = db.enqueue_media(
+            media_type="image",
+            title=headline,
+            caption=caption,
+            file_path=str(out_path)
+        )
+        print(f"[SQL Storage] Enqueued media item #{queue_id} into media_queue table.")
         return out_path
 
 if __name__ == "__main__":

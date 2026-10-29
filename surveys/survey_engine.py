@@ -10,10 +10,13 @@ Capabilities:
 """
 
 import json
+import sys
 from pathlib import Path
 from typing import Dict, List, Any
 
 BASE_DIR = Path(__file__).resolve().parent.parent
+sys.path.insert(0, str(BASE_DIR))
+from database import LocalSQLDatabase
 SURVEY_DATA_DIR = BASE_DIR / "data" / "surveys"
 SURVEY_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -22,8 +25,8 @@ class SurveyEngine:
         self.data_dir = SURVEY_DATA_DIR
 
     def get_standard_election_survey(self) -> Dict[str, Any]:
-        """Returns the core public sentiment questionnaire for campaign tracking in Nepal."""
-        return {
+        """Returns the core public sentiment questionnaire for campaign tracking in Nepal and saves to SQL."""
+        survey = {
             "survey_id": "nepal_campaign_survey_01",
             "title": "Nepal Electoral & Public Governance Sentiment Survey",
             "target_electorate": "Eligible voters in Nepal (Demographics: 18-35, 36-55, 55+)",
@@ -63,6 +66,9 @@ class SurveyEngine:
                 }
             ]
         }
+        db = LocalSQLDatabase()
+        db.save_survey(survey["survey_id"], survey["title"], survey["questions"])
+        return survey
 
     def aggregate_survey_results(self, responses: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Computes summary percentages to provide statistical copy for the Image/Video agents."""
