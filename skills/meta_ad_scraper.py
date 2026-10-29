@@ -19,12 +19,13 @@ from pathlib import Path
 from typing import Dict, List, Any, Optional
 
 import requests
-sys.path.insert(0, str(BASE_DIR))
-from database import LocalSQLDatabase
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 DATA_DIR = BASE_DIR / "data"
 DATA_DIR.mkdir(exist_ok=True)
+
+sys.path.insert(0, str(BASE_DIR))
+from database import LocalSQLDatabase
 
 class MetaAdLibraryScraper:
     def __init__(self, access_token: Optional[str] = None):
